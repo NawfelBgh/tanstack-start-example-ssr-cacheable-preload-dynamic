@@ -1,0 +1,35 @@
+diff --git a/node_modules/@tanstack/start-server-core/dist/esm/createStartHandler.js b/node_modules/@tanstack/start-server-core/dist/esm/createStartHandler.js
+index 169ab20..3688338 100644
+--- a/node_modules/@tanstack/start-server-core/dist/esm/createStartHandler.js
++++ b/node_modules/@tanstack/start-server-core/dist/esm/createStartHandler.js
+@@ -335,7 +335,7 @@ function createStartHandler(cbOrOptions) {
+ async function handleRedirectResponse(response, request, getRouter) {
+ 	if (!isRedirect(response)) return response;
+ 	if (isResolvedRedirect(response)) {
+-		if (request.headers.get("x-tsr-serverFn") === "true") return Response.json({
++		if (request.url.includes('/_serverFn/')) return Response.json({
+ 			...response.options,
+ 			isSerializedRedirect: true
+ 		}, { headers: response.headers });
+@@ -349,7 +349,7 @@ async function handleRedirectResponse(response, request, getRouter) {
+ 		"hash"
+ 	].some((d) => typeof opts[d] === "function")) throw new Error(`Server side redirects must use static search, params, and hash values and do not support functional values. Received functional values for: ${Object.keys(opts).filter((d) => typeof opts[d] === "function").map((d) => `"${d}"`).join(", ")}`);
+ 	const redirect = (await getRouter()).resolveRedirect(response);
+-	if (request.headers.get("x-tsr-serverFn") === "true") return Response.json({
++	if (request.url.includes('/_serverFn/')) return Response.json({
+ 		...response.options,
+ 		isSerializedRedirect: true
+ 	}, { headers: response.headers });
+diff --git a/node_modules/@tanstack/start-server-core/dist/esm/server-functions-handler.js b/node_modules/@tanstack/start-server-core/dist/esm/server-functions-handler.js
+index c493774..9cdde01 100644
+--- a/node_modules/@tanstack/start-server-core/dist/esm/server-functions-handler.js
++++ b/node_modules/@tanstack/start-server-core/dist/esm/server-functions-handler.js
+@@ -16,7 +16,7 @@ var handleServerAction = async ({ request, context, serverFnId }) => {
+ 		status: 405,
+ 		headers: { Allow: action.method }
+ 	});
+-	const isServerFn = request.headers.get("x-tsr-serverFn") === "true";
++	const isServerFn = request.url.includes('/_serverFn/');
+ 	if (!serovalPlugins) serovalPlugins = getDefaultSerovalPlugins();
+ 	const contentType = request.headers.get("Content-Type");
+ 	function parsePayload(payload) {
