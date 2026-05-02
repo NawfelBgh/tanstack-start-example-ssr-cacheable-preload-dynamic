@@ -1,4 +1,4 @@
-import { Link, Outlet, createFileRoute } from '@tanstack/react-router'
+import { Link, Outlet, createFileRoute, useRouterState } from '@tanstack/react-router'
 import { fetchPosts } from '../utils/posts'
 
 export const Route = createFileRoute('/_layout/posts')({
@@ -10,6 +10,7 @@ export const Route = createFileRoute('/_layout/posts')({
 
 function PostsComponent() {
   const posts = Route.useLoaderData()
+  const routerStatus = useRouterState({ select: (s) => s.status });
 
   return (
     <div className="p-2 flex gap-2">
@@ -34,7 +35,10 @@ function PostsComponent() {
         )}
       </ul>
       <hr />
-      <Outlet />
+      {/* FIXME: when routerStatus changes to idle, on page load, the className does not get updated  */}
+      <div className={(routerStatus === "pending" ? ' opacity-50' : '')}>
+        <Outlet/>
+      </div>
     </div>
   )
 }

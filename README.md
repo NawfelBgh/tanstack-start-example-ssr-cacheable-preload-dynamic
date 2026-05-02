@@ -1,8 +1,10 @@
 # TanStack Start - Preloading with Link Tags Example
 
-This is a modified version of the basic TanStack Start example. It demonstrates using server functions to implement Server-Side Rendering for publicly-cacheable page content, while using `<link rel="preload">` tags to accelerate the fetching of non-cacheable user-specific content.
+This is a modified version of the basic TanStack Start example. It demonstrates the pattern of Server-Side Rendering publicly-cacheable page content, while using `<link rel="preload">` tags to accelerate the fetching of non-cacheable user-specific content.
 
 `<link rel="preload">` tags allow preloading dynamic page data as soon as the client loads the page's head element and before any script is loaded. This gives performance similar to and sometimes better than streaming the whole page content due to better cache efficiency. See [comparison article](https://nawfelbgh.github.io/blog/when-pre-loading-beats-streaming-the-caching-advantage/).
+
+## Limitations of the server functions' implementation
 
 Today, TanStack server function implementation has limitations that prevent using them with `<link rel="preload">` tags:
 
@@ -11,9 +13,16 @@ Today, TanStack server function implementation has limitations that prevent usin
 - Server functions do not provide a way to get their URLs with given parameters, which is needed to construct preload URLs. Currently, only the `serverFn.url` attribute is provided which only works for preloading GET server functions with no parameters.
     - This repo works around this issue by [manually calling seroval to serialize parameters](src/utils/serializeServerFnPayload.ts).
 
-This means that to use the SSR-cacheable-content/preload-dynamic-content pattern today, we must either use normal API routes, or turn to such fragile workarounds to implement it using server functions. This repo aims to document the limitations and appeal to TanStack maintainers to address them in a future release.
+This means that to use the SSR-cacheable-content/preload-dynamic-content pattern today, we must either use normal API routes, as demonstrated on the branch [use-classic-api-routes](https://github.com/NawfelBgh/tanstack-start-example-ssr-cacheable-preload-dynamic/tree/use-classic-api-routes), or turn to fragile workarounds to implement it using server functions. This repo aims to document the limitations and appeal to TanStack maintainers to address them in a future release.
 
-## Implementation details
+## Other issue found
+
+- When router status is updated on page load, the component is not re-rendered to reflect it.
+    - This can be tested by navigating to `/posts/1`: The page remains grayed out as if still in pending state. See [problem code](src/routes/_layout.posts.tsx#L39).
+
+## Implementation details (server functions version)
+
+For the classic APIs version check out to the [use-classic-api-routes](https://github.com/NawfelBgh/tanstack-start-example-ssr-cacheable-preload-dynamic/tree/use-classic-api-routes) branch.
 
 - The app [defines](src/utils/users.ts) two server functions for getting dynamic user-specific information:
     - `fetchUser()` fetches user name and profile pic
@@ -22,13 +31,9 @@ This means that to use the SSR-cacheable-content/preload-dynamic-content pattern
     - use cookies to get the user session,
     - set a small max-age value (`private, max-age=5`) so that preloaded values are reused by subsequent fetches, and
     - use a 2-second setTimeout to simulate slow network loading.
-- The page's [_layout](src/routes/_layout.tsx) inserts a preload tag to the head of the page to preload `fetchUser()`. And it renders a client-only component [UserInfo](src/components/UserInfo.tsx) which calls `fetchUser()` reusing the already preloaded fetch.
-- Likewise, the page [_layout/posts/$postId](src/routes/_layout.posts.$postId.tsx) inserts a preload tag to the head of the page to preload `fetchUserLike(postId)`. And it renders the client-only component [UserLike](src/components/UserLike.tsx) which calls `fetchUserLike()` reusing the already preloaded fetch.
+- The page's [_layout](src/routes/_layout.tsx) inserts a preload tag to the head of the page to preload `fetchUser()` when rendered on the server. On the client, it uses the [EnsureData](src/utils/EnsureData.tsx) helper component to call `fetchUser()` reusing the already preloaded fetch.
+- Likewise, the page [_layout/posts/$postId](src/routes/_layout.posts.$postId.tsx) inserts a preload tag to the head of the page to preload `fetchUserLike(postId)` when rendered on the server. On the client, it uses the [EnsureData](src/utils/EnsureData.tsx) helper component to call `fetchUserLike(postId)` reusing the already preloaded fetch.
 - All pages set the Cache-Control header `public, max-age=600`.
-
-## Approach limitations
-
-When doing client-side navigation, it makes more sense to fetch dynamic page parts using standard router loader functions to take advantage of the router's prefetching. I think this is achievable using client-side specific logic in both routes' loader and head functions, but I fear that would be less clean and less maintainable.
 
 ## Getting Started
 
