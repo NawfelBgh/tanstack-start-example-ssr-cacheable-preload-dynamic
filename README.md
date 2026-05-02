@@ -33,6 +33,7 @@ For the classic APIs version check out to the [use-classic-api-routes](https://g
     - use a 2-second setTimeout to simulate slow network loading.
 - The page's [_layout](src/routes/_layout.tsx) inserts a preload tag to the head of the page to preload `fetchUser()` when rendered on the server. On the client, it uses the [EnsureData](src/utils/EnsureData.tsx) helper component to call `fetchUser()` reusing the already preloaded fetch.
 - Likewise, the page [_layout/posts/$postId](src/routes/_layout.posts.$postId.tsx) inserts a preload tag to the head of the page to preload `fetchUserLike(postId)` when rendered on the server. On the client, it uses the [EnsureData](src/utils/EnsureData.tsx) helper component to call `fetchUserLike(postId)` reusing the already preloaded fetch.
+- On client-side navigation, dynamic page data is loaded by route loaders, instead of relying on `<link rel="preload">` tags. This way, page prefetching on link hover does take into account the dynamic data.
 - All pages set the Cache-Control header `public, max-age=600`.
 
 ## Getting Started
