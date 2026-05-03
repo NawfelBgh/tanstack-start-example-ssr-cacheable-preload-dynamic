@@ -1,5 +1,8 @@
+import { queryOptions } from '@tanstack/react-query'
 import { createServerFn } from '@tanstack/react-start'
 import { getCookie, setResponseHeader } from '@tanstack/react-start/server'
+import { serialize } from './serializeServerFnPayload'
+import { AnyRouteMatch } from '@tanstack/react-router'
 
 export type UserType = {
   id: number
@@ -37,3 +40,43 @@ export const fetchUserLike = createServerFn()
     await new Promise(resolve => setTimeout(resolve, 2_000));
     return true;
   })
+
+export const userQueryOptions = () => queryOptions({
+  queryKey: ['user'],
+  queryFn: async () => {
+    // Add a timeout to simulated delayed script execution, to make the effect of <link rel="preload"> more apparent
+    // await new Promise(resolve => setTimeout(resolve, 1_000));
+    
+    return fetchUser();
+  },
+});
+
+export const userQueryPreloadLinks = (): AnyRouteMatch['links'] => [
+  {
+    rel: 'preload',
+    // In this simple case, fetchUser.url is sufficient
+    href: fetchUser.url,
+    as: 'fetch',
+    crossOrigin: "use-credentials",
+  },
+];
+
+export const userLikeQueryOptions = (postId: string) => queryOptions({
+  queryKey: ['userLike', postId],
+  queryFn: async () => {
+    // Add a timeout to simulated delayed script execution, to make the effect of <link rel="preload"> more apparent
+    // await new Promise(resolve => setTimeout(resolve, 1_000));
+    
+    return fetchUserLike({ data: +postId });
+  },
+});
+
+export const userLikeQueryPreloadLinks = async (postId: string): Promise<AnyRouteMatch['links']> => [
+  {
+    rel: 'preload',
+    // FIXME: We need an official helper function to get server function's URL for given parameters
+    href: fetchUserLike.url + '?payload=' + encodeURIComponent(await serialize({ data: +postId })),
+    as: 'fetch',
+    crossOrigin: "use-credentials",
+  },
+];

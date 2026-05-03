@@ -1,9 +1,9 @@
+import { queryOptions } from '@tanstack/react-query'
 import { notFound } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
-import { setResponseHeader } from '@tanstack/react-start/server'
 
 export type PostType = {
-  id: number
+  id: string
   title: string
   body: string
 }
@@ -38,3 +38,17 @@ export const fetchPosts = createServerFn().handler(async () => {
   const posts = await res.json()
   return (posts as Array<PostType>).slice(0, 10)
 })
+
+export const postsQueryOptions = () =>
+  queryOptions({
+    queryKey: ['posts'],
+    queryFn: () => fetchPosts(),
+    staleTime: 600_000, // 10 minutes
+  })
+
+export const postQueryOptions = (postId: string) =>
+  queryOptions({
+    queryKey: ['post', postId],
+    queryFn: () => fetchPost({ data: postId }),
+    staleTime: 600_000, // 10 minutes
+  })

@@ -1,38 +1,43 @@
 import { Link, Outlet, createFileRoute, useRouterState } from '@tanstack/react-router'
-import { fetchPosts } from '../utils/posts'
+import { postsQueryOptions } from '../utils/posts'
+import { useSuspenseQuery } from '@tanstack/react-query'
 
 export const Route = createFileRoute('/_layout/posts')({
-  loader: async () => {
-    return fetchPosts()
+  loader: async ({ context }) => {
+    await context.queryClient.ensureQueryData(postsQueryOptions())
   },
+  head: () => ({
+    meta: [{ title: 'Posts' }],
+  }),
   component: PostsComponent,
 })
 
 function PostsComponent() {
-  const posts = Route.useLoaderData()
-  const routerStatus = useRouterState({ select: (s) => s.status });
+  const postsQuery = useSuspenseQuery(postsQueryOptions())
+  const routerStatus = useRouterState({ select: (s) => s.status })
 
   return (
     <div className="p-2 flex gap-2">
       <ul className="list-disc pl-4">
-        {[...posts, { id: 'i-do-not-exist', title: 'Non-existent Post' }].map(
-          (post) => {
-            return (
-              <li key={post.id} className="whitespace-nowrap">
-                <Link
-                  to="/posts/$postId"
-                  params={{
-                    postId: String(post.id),
-                  }}
-                  className="block py-1 text-blue-800 hover:text-blue-600"
-                  activeProps={{ className: 'text-black font-bold' }}
-                >
-                  <div>{post.title.substring(0, 20)}</div>
-                </Link>
-              </li>
-            )
-          },
-        )}
+        {[
+          ...postsQuery.data,
+          { id: 'i-do-not-exist', title: 'Non-existent Post' },
+        ].map((post) => {
+          return (
+            <li key={post.id} className="whitespace-nowrap">
+              <Link
+                to="/posts/$postId"
+                params={{
+                  postId: post.id,
+                }}
+                className="block py-1 text-blue-800 hover:text-blue-600"
+                activeProps={{ className: 'text-black font-bold' }}
+              >
+                <div>{post.title.substring(0, 20)}</div>
+              </Link>
+            </li>
+          )
+        })}
       </ul>
       <hr />
       {/* FIXME: when routerStatus changes to idle, on page load, the className does not get updated  */}
