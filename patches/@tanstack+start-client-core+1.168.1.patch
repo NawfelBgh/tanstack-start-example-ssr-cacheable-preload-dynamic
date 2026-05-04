@@ -1,0 +1,28 @@
+diff --git a/node_modules/@tanstack/start-client-core/dist/esm/client-rpc/serverFnFetcher.js b/node_modules/@tanstack/start-client-core/dist/esm/client-rpc/serverFnFetcher.js
+index a3eaddd..fbee038 100644
+--- a/node_modules/@tanstack/start-client-core/dist/esm/client-rpc/serverFnFetcher.js
++++ b/node_modules/@tanstack/start-client-core/dist/esm/client-rpc/serverFnFetcher.js
+@@ -64,8 +64,8 @@ async function serverFnFetcher(url, args, handler) {
+ 	const fetchImpl = first.fetch ?? handler;
+ 	const type = first.data instanceof FormData ? "formData" : "payload";
+ 	const headers = first.headers ? new Headers(first.headers) : new Headers();
+-	headers.set("x-tsr-serverFn", "true");
+-	if (type === "payload") headers.set("accept", `${TSS_CONTENT_TYPE_FRAMED}, application/x-ndjson, application/json`);
++	//headers.set("x-tsr-serverFn", "true");
++	//if (type === "payload") headers.set("accept", `${TSS_CONTENT_TYPE_FRAMED}, application/x-ndjson, application/json`);
+ 	if (first.method === "GET") {
+ 		if (type === "formData") throw new Error("FormData is not supported with GET requests");
+ 		const serializedPayload = await serializePayload(first);
+@@ -85,7 +85,11 @@ async function serverFnFetcher(url, args, handler) {
+ 		method: first.method,
+ 		headers,
+ 		signal: first.signal,
+-		body
++		body,
++		// mode: 'no-cors' is needed for <link rel=preload> to work in Safari, which doesn't reuse crossorigin preloads.
++		// mode: 'cors' is needed for POST requests. Otherwise, the browser will override the content-type header with a CORS safe value (instead of application/json). 
++		mode: first.method === 'GET' ? 'no-cors' : 'cors',
++		credentials: 'include',
+ 	}));
+ }
+ async function serializePayload(opts) {

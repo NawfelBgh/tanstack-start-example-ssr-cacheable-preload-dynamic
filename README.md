@@ -54,12 +54,16 @@ This repo contains 2 versions:
 
 Today, TanStack server function implementation has limitations that prevent using them with `<link rel="preload">` tags:
 
-- The server-side implementation only returns content when the header `x-tsr-serverFn: true` is sent.
+- The server functions' server-side implementation only returns content when the header `x-tsr-serverFn: true` is sent.
     - This repo works around this issue using [patch-package](https://www.npmjs.com/package/patch-package) with [the provided patch](patches/@tanstack+start-server-core+1.167.28.patch)
+- The server functions' client-side implementation generates requests that are different from those created by `<link rel="preload">`, preventing browsers from reusing the preloaded content.
+    - The differences are:
+        - The added header `x-tsr-serverFn: true`
+        - Not including credentials (Cookie), which is the default behavior for `fetch`.
+    - It also fetches in `cors` mode (the default for `fetch`), meaning that we must match it by using `<link rel="preload" crossorigin="use-credentials" as="fetch" href="...">`. This works perfectly fine in Chromium-based browsers and in Firefox. But [Safari does not reuse cross-origin preloads](https://stackoverflow.com/a/63814972).
+    - This repo works around these issues using [patch-package](https://www.npmjs.com/package/patch-package) with [the provided patch](patches/@tanstack+start-client-core+1.168.1.patch)
 - Server functions do not provide a way to get their URLs with given parameters, which is needed to construct preload URLs. Currently, only the `serverFn.url` attribute is provided which only works for preloading GET server functions with no parameters.
     - This repo works around this issue by [manually calling seroval to serialize parameters](src/utils/serializeServerFnPayload.ts).
-- The TanStack Start client code that fetches server functions adds specific headers to requests: `x-tsr-serverFn: true`, `Origin` (for Chromium) and `Priority` (for Firefox). These headers differ from those sent by the browser when processing `<link rel="preload">` tags.  As a result, the browser does not reuse the preload and issues a second request.
-    - This implementation works around this by setting a short max-age value (`private, max-age=5`), which causes Firefox and Chromium-based browsers to reuse the preloaded data despite the header mismatch. Safari does not reuse the preloaded data in this scenario.
 
 This means that to use the SSR-cacheable-content/preload-dynamic-content pattern today, we must either use normal API routes, as demonstrated on the branch [use-classic-api-routes](https://github.com/NawfelBgh/tanstack-start-example-ssr-cacheable-preload-dynamic/tree/use-classic-api-routes), or turn to fragile workarounds to implement it using server functions. This repo aims to document the limitations and appeal to TanStack maintainers to address them in a future release.
 
@@ -75,7 +79,6 @@ This means that to use the SSR-cacheable-content/preload-dynamic-content pattern
     - `fetchUserLike(postId: number)` fetches whether the user likes a given post
 - Both functions:
     - use cookies to get the user session,
-    - set a small max-age value (`private, max-age=5`) so that preloaded values are reused by subsequent fetches,
     - use a 2-second setTimeout to simulate slow network loading, and
     - are accessed through TanStack query wrappers for ease of consumption.
 - The page's [_layout](src/routes/_layout.tsx) inserts a preload tag to the head of the page to preload `fetchUser()` when rendered on the server. On the client, it renders the [UserInfo](src/components/UserInfo.tsx) component which calls `fetchUser()` reusing the already preloaded fetch.
