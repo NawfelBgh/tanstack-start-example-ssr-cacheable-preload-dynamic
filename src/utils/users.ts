@@ -16,6 +16,7 @@ export const fetchUser = createServerFn()
     const session = getCookie('session');
     // Make the response privately cacheable for a short time (5 seconds), so that it gets reused when preloaded
     setResponseHeader('cache-control', 'private, max-age=5')
+    console.info('Fetching user information');
     
     // Make the response extra slow for testing
     await new Promise(resolve => setTimeout(resolve, 2_000));
