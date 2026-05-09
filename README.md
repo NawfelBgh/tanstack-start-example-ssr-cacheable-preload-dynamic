@@ -67,11 +67,6 @@ Today, TanStack server function implementation has limitations that prevent usin
 
 This means that to use the SSR-cacheable-content/preload-dynamic-content pattern today, we must either use normal API routes, as demonstrated on the branch [use-classic-api-routes](https://github.com/NawfelBgh/tanstack-start-example-ssr-cacheable-preload-dynamic/tree/use-classic-api-routes), or turn to fragile workarounds to implement it using server functions. This repo aims to document the limitations and appeal to TanStack maintainers to address them in a future release.
 
-### Other issue found
-
-- When router state is updated on page load, the component is not re-rendered to reflect it.
-    - This can be tested by navigating to `/posts/1`: The page remains grayed out as if still in pending state. See [problem code](src/routes/_layout.posts.tsx#L39).
-
 ### Implementation details
 
 - The app [defines](src/utils/users.ts) two server functions for getting dynamic user-specific information:

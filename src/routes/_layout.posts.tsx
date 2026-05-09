@@ -1,6 +1,8 @@
 import { Link, Outlet, createFileRoute, useRouterState } from '@tanstack/react-router'
 import { postsQueryOptions } from '../utils/posts'
 import { useSuspenseQuery } from '@tanstack/react-query'
+import { useMemo } from 'react'
+import { isServer } from '~/utils/isServer'
 
 export const Route = createFileRoute('/_layout/posts')({
   loader: async ({ context }) => {
@@ -10,11 +12,15 @@ export const Route = createFileRoute('/_layout/posts')({
     meta: [{ title: 'Posts' }],
   }),
   component: PostsComponent,
-})
+});
 
 function PostsComponent() {
-  const postsQuery = useSuspenseQuery(postsQueryOptions())
-  const routerStatus = useRouterState({ select: (s) => s.status })
+  const postsQuery = useSuspenseQuery(postsQueryOptions());
+  const routerStatus = useRouterState({ select: (s) => s.status });
+  // Note: when the page is rendered on the server side, routerStatus is pending
+  // routerStatus does not change to idle, on page load on the client
+  // hence the isServer() check
+  const isNavigatingAway = useMemo(() => routerStatus === 'pending' && !isServer(), [routerStatus, isServer()]);
 
   return (
     <div className="p-2 flex gap-2">
@@ -40,8 +46,7 @@ function PostsComponent() {
         })}
       </ul>
       <hr />
-      {/* FIXME: when routerStatus changes to idle, on page load, the className does not get updated  */}
-      <div className={(routerStatus === "pending" ? ' opacity-50' : '')}>
+      <div className={(isNavigatingAway ? ' opacity-50' : '')}>
         <Outlet/>
       </div>
     </div>
