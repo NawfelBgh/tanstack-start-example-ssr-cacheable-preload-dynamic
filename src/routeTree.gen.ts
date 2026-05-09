@@ -11,9 +11,11 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as LayoutRouteImport } from './routes/_layout'
 import { Route as LayoutIndexRouteImport } from './routes/_layout.index'
+import { Route as ApiUserRouteImport } from './routes/api/user'
 import { Route as LayoutPostsRouteImport } from './routes/_layout.posts'
 import { Route as LayoutPostsIndexRouteImport } from './routes/_layout.posts.index'
 import { Route as LayoutPostsPostIdRouteImport } from './routes/_layout.posts.$postId'
+import { Route as ApiPostPostIdLikeRouteImport } from './routes/api/post.$postId.like'
 
 const LayoutRoute = LayoutRouteImport.update({
   id: '/_layout',
@@ -23,6 +25,11 @@ const LayoutIndexRoute = LayoutIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => LayoutRoute,
+} as any)
+const ApiUserRoute = ApiUserRouteImport.update({
+  id: '/api/user',
+  path: '/api/user',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const LayoutPostsRoute = LayoutPostsRouteImport.update({
   id: '/posts',
@@ -39,42 +46,63 @@ const LayoutPostsPostIdRoute = LayoutPostsPostIdRouteImport.update({
   path: '/$postId',
   getParentRoute: () => LayoutPostsRoute,
 } as any)
+const ApiPostPostIdLikeRoute = ApiPostPostIdLikeRouteImport.update({
+  id: '/api/post/$postId/like',
+  path: '/api/post/$postId/like',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof LayoutIndexRoute
   '/posts': typeof LayoutPostsRouteWithChildren
+  '/api/user': typeof ApiUserRoute
   '/posts/$postId': typeof LayoutPostsPostIdRoute
   '/posts/': typeof LayoutPostsIndexRoute
+  '/api/post/$postId/like': typeof ApiPostPostIdLikeRoute
 }
 export interface FileRoutesByTo {
+  '/api/user': typeof ApiUserRoute
   '/': typeof LayoutIndexRoute
   '/posts/$postId': typeof LayoutPostsPostIdRoute
   '/posts': typeof LayoutPostsIndexRoute
+  '/api/post/$postId/like': typeof ApiPostPostIdLikeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_layout': typeof LayoutRouteWithChildren
   '/_layout/posts': typeof LayoutPostsRouteWithChildren
+  '/api/user': typeof ApiUserRoute
   '/_layout/': typeof LayoutIndexRoute
   '/_layout/posts/$postId': typeof LayoutPostsPostIdRoute
   '/_layout/posts/': typeof LayoutPostsIndexRoute
+  '/api/post/$postId/like': typeof ApiPostPostIdLikeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/posts' | '/posts/$postId' | '/posts/'
+  fullPaths:
+    | '/'
+    | '/posts'
+    | '/api/user'
+    | '/posts/$postId'
+    | '/posts/'
+    | '/api/post/$postId/like'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/posts/$postId' | '/posts'
+  to: '/api/user' | '/' | '/posts/$postId' | '/posts' | '/api/post/$postId/like'
   id:
     | '__root__'
     | '/_layout'
     | '/_layout/posts'
+    | '/api/user'
     | '/_layout/'
     | '/_layout/posts/$postId'
     | '/_layout/posts/'
+    | '/api/post/$postId/like'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   LayoutRoute: typeof LayoutRouteWithChildren
+  ApiUserRoute: typeof ApiUserRoute
+  ApiPostPostIdLikeRoute: typeof ApiPostPostIdLikeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -92,6 +120,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof LayoutIndexRouteImport
       parentRoute: typeof LayoutRoute
+    }
+    '/api/user': {
+      id: '/api/user'
+      path: '/api/user'
+      fullPath: '/api/user'
+      preLoaderRoute: typeof ApiUserRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_layout/posts': {
       id: '/_layout/posts'
@@ -113,6 +148,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/posts/$postId'
       preLoaderRoute: typeof LayoutPostsPostIdRouteImport
       parentRoute: typeof LayoutPostsRoute
+    }
+    '/api/post/$postId/like': {
+      id: '/api/post/$postId/like'
+      path: '/api/post/$postId/like'
+      fullPath: '/api/post/$postId/like'
+      preLoaderRoute: typeof ApiPostPostIdLikeRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
@@ -146,6 +188,8 @@ const LayoutRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   LayoutRoute: LayoutRouteWithChildren,
+  ApiUserRoute: ApiUserRoute,
+  ApiPostPostIdLikeRoute: ApiPostPostIdLikeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
